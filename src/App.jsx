@@ -482,7 +482,7 @@ const App = () => {
 
         {/* Persistent Footer if needed, but active section handles content */}
         <footer className="w-full py-6 text-center text-slate-500 text-sm border-t border-slate-800/30">
-          <p>Designed & Built with ❤️ by Harish Jiji | © 2026</p>
+          <p>© 2026 Harish Jiji · Full-Stack Developer</p>
         </footer>
       </main>
 
