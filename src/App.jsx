@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ExternalLink, Github, Linkedin, Mail, Instagram, ArrowRight, Code2 } from 'lucide-react';
+import { Menu, X, ExternalLink, Github, Linkedin, Mail, Instagram, ArrowRight, Code2, User, MessageSquare, Send, CheckCircle2, Home, Briefcase } from 'lucide-react';
 import styled from 'styled-components';
+import NotFound from './components/NotFound';
 
 const CarouselWrapper = styled.div`
   .wrapper {
@@ -14,24 +15,11 @@ const CarouselWrapper = styled.div`
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    cursor: grab;
   }
 
-  @keyframes autoRun3d {
-    from {
-      transform: perspective(800px) rotateY(-360deg);
-    }
-    to {
-      transform: perspective(800px) rotateY(0deg);
-    }
-  }
-
-  @keyframes animateBrightness {
-    from {
-      filter: brightness(1);
-    }
-    to {
-      filter: brightness(1);
-    }
+  .wrapper:active {
+    cursor: grabbing;
   }
 
   .card-3d-container {
@@ -40,13 +28,8 @@ const CarouselWrapper = styled.div`
     height: clamp(250px, 25vw, 350px);
     transform-style: preserve-3d;
     transform: perspective(1000px);
-    animation: autoRun3d 20s linear infinite;
     will-change: transform;
     margin: 0 auto;
-  }
-
-  .card-3d-container:hover {
-    animation-play-state: paused !important;
   }
 
   .card-carousel {
@@ -60,24 +43,18 @@ const CarouselWrapper = styled.div`
     left: 50%;
     transform-origin: center center;
     transform: translate(-50%, -50%) rotateY(calc((360deg / var(--quantity)) * var(--index))) translateZ(280px);
-    transition: box-shadow 0.3s, border-color 0.3s, transform 0.5s;
+    transition: box-shadow 0.3s, border-color 0.3s, scale 0.3s;
     will-change: transform;
     cursor: pointer;
     backdrop-filter: blur(5px);
     z-index: 10;
+    overflow: hidden;
 
     @media (min-width: 768px) {
       width: 190px;
       height: 260px;
       transform: translate(-50%, -50%) rotateY(calc((360deg / var(--quantity)) * var(--index))) translateZ(400px);
     }
-  }
-
-  .card-carousel:hover {
-    animation-play-state: paused !important;
-    border-color: rgba(var(--colorCard), 1);
-    box-shadow: 0 0 25px rgba(var(--colorCard), 0.4);
-    scale: 1.1;
   }
 
   .img-carousel {
@@ -89,7 +66,7 @@ const CarouselWrapper = styled.div`
     align-items: center;
     padding: 1.5rem;
     text-align: center;
-    background: rgba(15, 23, 42, 0.5);
+    border-radius: 0.8rem; /* slightly less than outer radius */
   }
 `;
 
@@ -260,6 +237,106 @@ const StyledLoader = styled.div`
   }
 `;
 
+const ContactFormWrapper = styled.div`
+  .input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 12px 16px 12px 48px;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+    color: white;
+    outline: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+    font-size: 0.95rem;
+  }
+
+  .input-field:focus {
+    border-color: #22d3ee;
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
+    background: rgba(30, 41, 59, 0.6);
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+
+  .input-field:focus + .input-icon {
+    color: #22d3ee;
+  }
+
+  .textarea-field {
+    min-height: 120px;
+    resize: none;
+    padding-top: 16px;
+  }
+
+  .textarea-icon {
+    top: 24px;
+    transform: none;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    box-shadow: 0 10px 20px -10px rgba(6, 182, 212, 0.5);
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+  }
+
+  .submit-btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .btn-text {
+    position: relative;
+    z-index: 1;
+  }
+
+  .success-message {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+
 const Loader = () => {
   return (
     <StyledLoader>
@@ -302,6 +379,104 @@ const App = () => {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [readMore, setReadMore] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+  // Carousel 3D Rotation State
+  const [rotation, setRotation] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const [spinSpeed, setSpinSpeed] = useState(0.8); // Speed of auto-rotation
+  const [dragVelocity, setDragVelocity] = useState(0); // For inertia
+
+  useEffect(() => {
+    if (projects.length === 0) return;
+    let animationFrameId;
+
+    const rotate = () => {
+      if (autoRotate && !isDragging) {
+        setRotation(prev => prev - spinSpeed);
+      } else if (!isDragging && Math.abs(dragVelocity) > 0.01) {
+        // Apply inertia after letting go
+        setRotation(prev => prev - dragVelocity);
+        setDragVelocity(prev => prev * 0.95); // Friction
+      }
+      animationFrameId = requestAnimationFrame(rotate);
+    };
+
+    animationFrameId = requestAnimationFrame(rotate);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [autoRotate, projects, spinSpeed, isDragging, dragVelocity]);
+
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    setAutoRotate(false);
+    setDragVelocity(0);
+    setStartX(e.type.includes('mouse') ? e.pageX : e.touches[0].pageX);
+  };
+
+  const handleDragMove = (e) => {
+    if (!isDragging) return;
+    const currentX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
+    const diff = currentX - startX;
+    setRotation(prev => prev + diff * 0.5); // Sensitivity of drag
+    setDragVelocity(-diff * 0.5); // Set velocity for inertia
+    setStartX(currentX);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    // Auto rotate will gently take over once inertia slows down, or we could just set it to true.
+    // Let's set autoRotate true and let the velocity decay.
+    setAutoRotate(true);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    /**
+     * GOOGLE FORM LINKING:
+     * 1. Go to your Google Form preview/live page.
+     * 2. Replace the FORM_ID below with the ID from your URL.
+     * 3. The entry.xxxx IDs are extracted from your DOM dump.
+     */
+    const FORM_ID = '1FAIpQLSdSeCa5OtI6KlmthfVqgMnW1WJLDNxFoHrtyR4i-MStbVnQgg'; 
+    const GOOGLE_FORM_URL = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
+
+    const queryParams = new URLSearchParams();
+    queryParams.append('entry.1822658888', formData.name);
+    queryParams.append('entry.1410136296', formData.email);
+    queryParams.append('entry.1739050397', formData.message);
+
+    try {
+      await fetch(GOOGLE_FORM_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: queryParams.toString()
+      });
+      
+      setIsSubmitting(false);
+      setSubmitStatus('success');
+      setFormData({ name: '', email: '', message: '' });
+      // Removed auto-reset of success status to allow user to see confirmation
+    } catch (error) {
+      console.error('Submission error:', error);
+      setIsSubmitting(false);
+      // In 'no-cors' mode, we usually assume success if it didn't crash
+      setSubmitStatus('success');
+    }
+  };
 
   const handleTabChange = (id) => {
     if (activeTab === id || isTransitioning) return;
@@ -315,11 +490,11 @@ const App = () => {
   };
 
   const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'about', label: 'About' },
-    { id: 'skills', label: 'Skills' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'contact', label: 'Contact' }
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'about', label: 'About', icon: User },
+    { id: 'skills', label: 'Skills', icon: Code2 },
+    { id: 'projects', label: 'Projects', icon: Briefcase },
+    { id: 'contact', label: 'Contact', icon: Mail }
   ];
 
   const skills = [
@@ -328,18 +503,50 @@ const App = () => {
     { category: 'Tools', items: ['Git', 'GitHub', 'VS Code', 'Postman', 'Linux', 'Netlify'] }
   ];
   const [selectedProject, setSelectedProject] = useState(null);
+  const [projectError, setProjectError] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        const CACHE_KEY = 'portfolio_github_projects';
+        const CACHE_EXPIRY = 60 * 60 * 1000; // 1 hour
+
+        // 1. Check if we have valid cached data
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+          try {
+            const { data, timestamp } = JSON.parse(cachedData);
+            if (Date.now() - timestamp < CACHE_EXPIRY) {
+              setProjects(data);
+              setLoadingProjects(false);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to parse cached project data');
+          }
+        }
+
+        // 2. Fetch from API if no valid cache
         const res = await fetch(
           'https://api.github.com/users/harish-jiji/repos?sort=updated&per_page=12'
         );
         const data = await res.json();
 
-        if (!Array.isArray(data)) {
+        if (!res.ok || !Array.isArray(data)) {
           console.error('GitHub API error (Rate limit?):', data);
+          // If we have stale cache, use it as a fallback when rate limited
+          if (cachedData) {
+            try {
+              const { data: staleData } = JSON.parse(cachedData);
+              if (staleData && staleData.length > 0) {
+                setProjects(staleData);
+                setProjectError(false);
+                return;
+              }
+            } catch (e) {}
+          }
           setProjects([]);
+          setProjectError(true);
           return;
         }
 
@@ -362,8 +569,12 @@ const App = () => {
             let allLangs = [];
             try {
               const langRes = await fetch(repo.languages_url);
-              const langData = await langRes.json();
-              allLangs = Object.keys(langData).slice(0, 4); // Limit to top 4 for UI
+              if (langRes.ok) {
+                const langData = await langRes.json();
+                allLangs = Object.keys(langData).slice(0, 4); // Limit to top 4 for UI
+              } else {
+                allLangs = [repo.language].filter(Boolean);
+              }
             } catch (e) {
               allLangs = [repo.language].filter(Boolean);
             }
@@ -383,9 +594,17 @@ const App = () => {
           })
         );
 
+        // 3. Save successful fetch to local storage
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          data: projectsWithLanguages,
+          timestamp: Date.now()
+        }));
+
         setProjects(projectsWithLanguages);
+        setProjectError(false);
       } catch (error) {
         console.error('Failed to fetch projects:', error);
+        setProjectError(true);
       } finally {
         setLoadingProjects(false);
       }
@@ -416,8 +635,8 @@ const App = () => {
         <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-cyan-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-4000"></div>
       </div>
 
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-slate-950/50 border-b border-slate-800/50 h-20">
+      {/* Navbar (Hidden on Mobile) */}
+      <nav className="hidden md:block fixed top-0 w-full z-50 backdrop-blur-md bg-slate-950/50 border-b border-slate-800/50 h-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
             {/* Logo */}
@@ -443,34 +662,43 @@ const App = () => {
               ))}
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
+            {/* Mobile Menu Button - Removed in favor of bottom nav */}
+            {/* <button
               className="md:hidden text-white"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            </button> */}
           </div>
-
-          {/* Mobile Menu */}
-          {mobileOpen && (
-            <div className="md:hidden absolute top-20 left-0 w-full bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50 pb-4 shadow-2xl">
-              {navItems.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => handleTabChange(item.id)}
-                  className="block w-full text-left px-6 py-4 text-sm font-medium hover:bg-slate-800/50 hover:text-cyan-400 transition-all text-white border-b border-slate-800/30 last:border-0"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </nav>
 
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/50 pb-safe">
+        <div className="flex justify-around items-center px-2 py-2">
+          {navItems.map(item => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleTabChange(item.id)}
+                className={`flex flex-col items-center justify-center w-full py-2 transition-colors ${isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                <div className={`transition-transform duration-300 ${isActive ? '-translate-y-1' : ''}`}>
+                  <Icon size={22} className={isActive ? 'drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]' : ''} />
+                </div>
+                <span className={`text-[9px] mt-1 font-bold tracking-wider uppercase transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Main Content Area - Scrollable Container for Content only */}
-      <main className="relative z-10 w-full h-full pt-20 overflow-y-auto overflow-x-hidden">
+      <main className="relative z-10 w-full h-full pt-4 md:pt-20 pb-20 md:pb-0 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="wait">
           {isTransitioning ? (
             <motion.div
@@ -768,8 +996,23 @@ const App = () => {
                 ) : (
                   // Carousel View (First Design)
                   <CarouselWrapper className="w-full h-[500px] flex items-center justify-center">
-                    <div className="wrapper">
-                      <div className="card-3d-container" style={{ '--quantity': projects.length }}>
+                    <div 
+                      className="wrapper"
+                      onMouseDown={handleDragStart}
+                      onMouseMove={handleDragMove}
+                      onMouseUp={handleDragEnd}
+                      onMouseLeave={handleDragEnd}
+                      onTouchStart={handleDragStart}
+                      onTouchMove={handleDragMove}
+                      onTouchEnd={handleDragEnd}
+                    >
+                      <div 
+                        className="card-3d-container" 
+                        style={{ 
+                          '--quantity': projects.length,
+                          transform: `perspective(1000px) rotateY(${rotation}deg)` 
+                        }}
+                      >
                         {projects.map((project, i) => (
                           <div
                             key={i}
@@ -779,7 +1022,13 @@ const App = () => {
                               '--colorCard': project.color,
                               '--quantity': projects.length 
                             }}
-                            onClick={() => setSelectedProject(project)}
+                            onClick={(e) => {
+                              // If they dragged, prevent clicking the card
+                              if (Math.abs(dragVelocity) > 2) return;
+                              setSelectedProject(project);
+                            }}
+                            onMouseEnter={() => autoRotate && setAutoRotate(false)}
+                            onMouseLeave={() => !isDragging && setAutoRotate(true)}
                           >
                             <div className="img-carousel">
                               <h3 className="text-[14px] md:text-[16px] font-black text-white uppercase tracking-tight line-clamp-2 px-1 mb-2">
@@ -800,13 +1049,13 @@ const App = () => {
                   </CarouselWrapper>
                 )}
 
-                {!loadingProjects && projects.length === 0 && (
-                  <div className="text-center text-slate-400 py-12">
-                    No projects found. Check back soon!
+                {!loadingProjects && (projectError || projects.length === 0) && (
+                  <div className="w-full flex-1 flex items-center justify-center -mx-4">
+                    <NotFound />
                   </div>
                 )}
                 
-                {!selectedProject && projects.length > 0 && (
+                {!selectedProject && projects.length > 0 && !projectError && (
                    <p className="mt-12 text-slate-500 text-sm animate-bounce flex items-center gap-2">
                      <ArrowRight size={16} className="rotate-90" />
                      Click a card to see details
@@ -832,15 +1081,111 @@ const App = () => {
                   Let's <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Connect</span>
                 </h2>
 
-                <div className="flex justify-center items-center">
-                  <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 rounded-2xl p-8 backdrop-blur flex flex-col justify-center h-full max-w-2xl w-full">
-                    <h3 className="text-2xl font-bold text-white mb-6 text-center">Social Profiles</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                  {/* Contact Form Container */}
+                  <ContactFormWrapper>
+                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 rounded-2xl p-8 backdrop-blur h-full flex flex-col min-h-[450px]">
+                      <AnimatePresence mode="wait">
+                        {submitStatus === 'success' ? (
+                          <motion.div
+                            key="success"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="flex-1 flex flex-col items-center justify-center text-center space-y-6"
+                          >
+                            <div className="w-20 h-20 bg-cyan-500/10 rounded-full flex items-center justify-center text-cyan-400 border border-cyan-500/20 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+                              <CheckCircle2 size={48} />
+                            </div>
+                            <div className="space-y-2">
+                              <h3 className="text-3xl font-black text-white">Thank You!</h3>
+                              <p className="text-slate-400 max-w-[280px] mx-auto">Your message has been received. I'll get back to you soon.</p>
+                            </div>
+                            <button
+                              onClick={() => setSubmitStatus(null)}
+                              className="px-8 py-3 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 rounded-xl text-xs font-bold text-cyan-400 transition-all uppercase tracking-widest"
+                            >
+                              Send Another Message
+                            </button>
+                          </motion.div>
+                        ) : (
+                          <motion.form
+                            key="form"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onSubmit={handleSubmit}
+                            className="flex-1 flex flex-col"
+                          >
+                            <h3 className="text-2xl font-bold text-white mb-8">Send a Message</h3>
+                            
+                            <div className="input-group">
+                              <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                placeholder="Your Name"
+                                required
+                                className="input-field"
+                              />
+                              <User className="input-icon" size={20} />
+                            </div>
+
+                            <div className="input-group">
+                              <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                placeholder="Your Gmail Address"
+                                required
+                                className="input-field"
+                              />
+                              <Mail className="input-icon" size={20} />
+                            </div>
+
+                            <div className="input-group">
+                              <textarea
+                                name="message"
+                                value={formData.message}
+                                onChange={handleInputChange}
+                                placeholder="How can I help you?"
+                                required
+                                className="input-field textarea-field"
+                              ></textarea>
+                              <MessageSquare className="input-icon textarea-icon" size={20} />
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={isSubmitting}
+                              className="submit-btn group py-4 mt-auto"
+                            >
+                              {isSubmitting ? (
+                                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              ) : (
+                                <>
+                                  <span className="btn-text">Send Message</span>
+                                  <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                </>
+                              )}
+                            </button>
+                          </motion.form>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </ContactFormWrapper>
+
+                  {/* Social Profiles */}
+                  <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 rounded-2xl p-8 backdrop-blur flex flex-col h-full">
+                    <h3 className="text-2xl font-bold text-white mb-8">Quick Links</h3>
+                    <div className="grid grid-cols-2 gap-4 flex-1">
                       {[
-                        { icon: Github, label: 'GitHub', href: 'https://github.com/harish-jiji', color: 'hover:border-slate-400 hover:text-slate-100' },
-                        { icon: Linkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/in/harish-jiji/', color: 'hover:border-blue-400 hover:text-blue-400' },
-                        { icon: Mail, label: 'Email', href: 'mailto:harishjiji16@gmail.com', color: 'hover:border-red-400 hover:text-red-400' },
-                        { icon: Instagram, label: 'Instagram', href: 'https://www.instagram.com/h___a__r___i__?igsh=MWVhOWNqbmh4bjlxMg==', color: 'hover:border-pink-500 hover:text-pink-500' }
+                        { icon: Github, label: 'GitHub', href: 'https://github.com/harish-jiji', color: 'hover:border-slate-400 hover:text-slate-100 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' },
+                        { icon: Linkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/in/harish-jiji/', color: 'hover:border-blue-400 hover:text-blue-400 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)]' },
+                        { icon: Mail, label: 'Email', href: 'mailto:harishjiji16@gmail.com', color: 'hover:border-red-400 hover:text-red-400 hover:shadow-[0_0_15px_rgba(239,68,68,0.1)]' },
+                        { icon: Instagram, label: 'Instagram', href: 'https://www.instagram.com/h___a__r___i__?igsh=MWVhOWNqbmh4bjlxMg==', color: 'hover:border-pink-500 hover:text-pink-500 hover:shadow-[0_0_15px_rgba(236,72,153,0.1)]' }
                       ].map((item, i) => (
                         <a
                           key={i}
@@ -849,7 +1194,7 @@ const App = () => {
                           rel={item.href.startsWith('mailto') ? "" : "noopener noreferrer"}
                           className={`flex flex-col items-center justify-center p-6 bg-slate-800/30 border border-slate-700/50 rounded-xl transition-all group ${item.color} cursor-pointer hover:bg-slate-800/60`}
                         >
-                          <item.icon size={32} className="mb-3 text-slate-400 group-hover:text-inherit transition-colors" />
+                          <item.icon size={32} className="mb-3 text-slate-400 group-hover:scale-110 transition-transform" />
                           <span className="text-sm font-medium text-slate-500 group-hover:text-inherit transition-colors">{item.label}</span>
                         </a>
                       ))}

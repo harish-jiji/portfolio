@@ -59,22 +59,14 @@
   }
 }
 
-/* Global scrollbar for dark theme feel */
+/* Hide global scrollbar but keep scroll functionality */
 ::-webkit-scrollbar {
-  width: 10px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: #101622;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #3E3E42;
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #4f4f4f;
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 @keyframes blink {
