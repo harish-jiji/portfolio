@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ExternalLink, Github, Linkedin, Mail, Instagram, ArrowRight, Code2, User, MessageSquare, Send, CheckCircle2, Home, Briefcase } from 'lucide-react';
 import styled from 'styled-components';
 import NotFound from './components/NotFound';
+import Background3D from './components/Background3D';
+
 
 const CarouselWrapper = styled.div`
   .wrapper {
@@ -628,12 +630,11 @@ const App = () => {
 
   return (
     <div className="bg-slate-950 text-white font-sans h-screen w-full overflow-hidden relative">
-      {/* Animated Background */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-2000"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-cyan-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-4000"></div>
+      {/* 3D Background */}
+      <div className="fixed inset-0 z-0">
+        <Background3D />
       </div>
+
 
       {/* Navbar (Hidden on Mobile) */}
       <nav className="hidden md:block fixed top-0 w-full z-50 backdrop-blur-md bg-slate-950/50 border-b border-slate-800/50 h-20">
