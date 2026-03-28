@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ExternalLink, Github, Linkedin, Mail, Instagram, ArrowRight, Code2, User, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
+import { Menu, X, ExternalLink, Github, Linkedin, Mail, Instagram, ArrowRight, Code2, User, MessageSquare, Send, CheckCircle2, Home, Briefcase } from 'lucide-react';
 import styled from 'styled-components';
+import NotFound from './components/NotFound';
 
 const CarouselWrapper = styled.div`
   .wrapper {
@@ -489,11 +490,11 @@ const App = () => {
   };
 
   const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'about', label: 'About' },
-    { id: 'skills', label: 'Skills' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'contact', label: 'Contact' }
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'about', label: 'About', icon: User },
+    { id: 'skills', label: 'Skills', icon: Code2 },
+    { id: 'projects', label: 'Projects', icon: Briefcase },
+    { id: 'contact', label: 'Contact', icon: Mail }
   ];
 
   const skills = [
@@ -502,18 +503,50 @@ const App = () => {
     { category: 'Tools', items: ['Git', 'GitHub', 'VS Code', 'Postman', 'Linux', 'Netlify'] }
   ];
   const [selectedProject, setSelectedProject] = useState(null);
+  const [projectError, setProjectError] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        const CACHE_KEY = 'portfolio_github_projects';
+        const CACHE_EXPIRY = 60 * 60 * 1000; // 1 hour
+
+        // 1. Check if we have valid cached data
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+          try {
+            const { data, timestamp } = JSON.parse(cachedData);
+            if (Date.now() - timestamp < CACHE_EXPIRY) {
+              setProjects(data);
+              setLoadingProjects(false);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to parse cached project data');
+          }
+        }
+
+        // 2. Fetch from API if no valid cache
         const res = await fetch(
           'https://api.github.com/users/harish-jiji/repos?sort=updated&per_page=12'
         );
         const data = await res.json();
 
-        if (!Array.isArray(data)) {
+        if (!res.ok || !Array.isArray(data)) {
           console.error('GitHub API error (Rate limit?):', data);
+          // If we have stale cache, use it as a fallback when rate limited
+          if (cachedData) {
+            try {
+              const { data: staleData } = JSON.parse(cachedData);
+              if (staleData && staleData.length > 0) {
+                setProjects(staleData);
+                setProjectError(false);
+                return;
+              }
+            } catch (e) {}
+          }
           setProjects([]);
+          setProjectError(true);
           return;
         }
 
@@ -536,8 +569,12 @@ const App = () => {
             let allLangs = [];
             try {
               const langRes = await fetch(repo.languages_url);
-              const langData = await langRes.json();
-              allLangs = Object.keys(langData).slice(0, 4); // Limit to top 4 for UI
+              if (langRes.ok) {
+                const langData = await langRes.json();
+                allLangs = Object.keys(langData).slice(0, 4); // Limit to top 4 for UI
+              } else {
+                allLangs = [repo.language].filter(Boolean);
+              }
             } catch (e) {
               allLangs = [repo.language].filter(Boolean);
             }
@@ -557,9 +594,17 @@ const App = () => {
           })
         );
 
+        // 3. Save successful fetch to local storage
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          data: projectsWithLanguages,
+          timestamp: Date.now()
+        }));
+
         setProjects(projectsWithLanguages);
+        setProjectError(false);
       } catch (error) {
         console.error('Failed to fetch projects:', error);
+        setProjectError(true);
       } finally {
         setLoadingProjects(false);
       }
@@ -590,8 +635,8 @@ const App = () => {
         <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-cyan-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-4000"></div>
       </div>
 
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-slate-950/50 border-b border-slate-800/50 h-20">
+      {/* Navbar (Hidden on Mobile) */}
+      <nav className="hidden md:block fixed top-0 w-full z-50 backdrop-blur-md bg-slate-950/50 border-b border-slate-800/50 h-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
             {/* Logo */}
@@ -617,34 +662,43 @@ const App = () => {
               ))}
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
+            {/* Mobile Menu Button - Removed in favor of bottom nav */}
+            {/* <button
               className="md:hidden text-white"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            </button> */}
           </div>
-
-          {/* Mobile Menu */}
-          {mobileOpen && (
-            <div className="md:hidden absolute top-20 left-0 w-full bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50 pb-4 shadow-2xl">
-              {navItems.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => handleTabChange(item.id)}
-                  className="block w-full text-left px-6 py-4 text-sm font-medium hover:bg-slate-800/50 hover:text-cyan-400 transition-all text-white border-b border-slate-800/30 last:border-0"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </nav>
 
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/50 pb-safe">
+        <div className="flex justify-around items-center px-2 py-2">
+          {navItems.map(item => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleTabChange(item.id)}
+                className={`flex flex-col items-center justify-center w-full py-2 transition-colors ${isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                <div className={`transition-transform duration-300 ${isActive ? '-translate-y-1' : ''}`}>
+                  <Icon size={22} className={isActive ? 'drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]' : ''} />
+                </div>
+                <span className={`text-[9px] mt-1 font-bold tracking-wider uppercase transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Main Content Area - Scrollable Container for Content only */}
-      <main className="relative z-10 w-full h-full pt-20 overflow-y-auto overflow-x-hidden">
+      <main className="relative z-10 w-full h-full pt-4 md:pt-20 pb-20 md:pb-0 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="wait">
           {isTransitioning ? (
             <motion.div
@@ -995,13 +1049,13 @@ const App = () => {
                   </CarouselWrapper>
                 )}
 
-                {!loadingProjects && projects.length === 0 && (
-                  <div className="text-center text-slate-400 py-12">
-                    No projects found. Check back soon!
+                {!loadingProjects && (projectError || projects.length === 0) && (
+                  <div className="w-full flex-1 flex items-center justify-center -mx-4">
+                    <NotFound />
                   </div>
                 )}
                 
-                {!selectedProject && projects.length > 0 && (
+                {!selectedProject && projects.length > 0 && !projectError && (
                    <p className="mt-12 text-slate-500 text-sm animate-bounce flex items-center gap-2">
                      <ArrowRight size={16} className="rotate-90" />
                      Click a card to see details
