@@ -941,13 +941,9 @@ const App = () => {
                   </motion.div>
                 ) : (
                   // Carousel View (First Design)
-                  <CarouselWrapper className="w-full h-[500px] flex items-center justify-center relative">
-                    {/* Top and Bottom gradient overlays for fading effect */}
-                    <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-slate-950 to-transparent z-10 pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-slate-950 to-transparent z-10 pointer-events-none"></div>
-                    
+                  <CarouselWrapper className="w-full h-[500px] flex items-center justify-center">
                     <div 
-                      className="wrapper relative z-20"
+                      className="wrapper"
                       onMouseDown={handleDragStart}
                       onMouseMove={handleDragMove}
                       onMouseUp={handleDragEnd}
